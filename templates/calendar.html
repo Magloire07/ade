@@ -60,6 +60,7 @@
 
         <div class="nav-controls">
             <form id="selForm" method="get" action="/" style="display:flex;gap:10px;align-items:center">
+                <label for="edt">Groupe</label>
                 <select id="edt" name="edt" onchange="this.form.submit()">
                     {% for o in options %}
                     <option value="{{ o }}" {% if o==option %}selected{% endif %}>{{ o }}</option>
