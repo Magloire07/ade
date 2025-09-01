@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Emploi du temps</title>
+    <style>
+        :root{ --left-col-width:90px; --hour-height:48px; }
+        body{ font-family: Arial, Helvetica, sans-serif; margin:12px; background:#eef2f5 }
+    /* Navbar styling */
+    .top-bar{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; padding:10px 14px; background: linear-gradient(90deg,#2d6cdf 0%,#6ec1ff 100%); border-radius:12px; color:white }
+    .brand{ display:flex; align-items:center; gap:12px; font-weight:700 }
+    .brand .logo{ width:36px; height:36px; background:rgba(255,255,255,0.18); border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:800 }
+    .nav-controls{ display:flex; align-items:center; gap:10px }
+    select{ padding:8px 10px; border-radius:8px; border: none; background: rgba(255,255,255,0.12); color: #072033 }
+    /* ensure option text is readable in dropdowns */
+    select option{ color: #072033; background: white }
+    .nav-controls button{ background: white; color:#1f2d4a; border:none; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600 }
+    .nav-controls button:hover{ transform:translateY(-1px); box-shadow:0 6px 14px rgba(0,0,0,0.12) }
+    .nav-controls label{ color:rgba(255,255,255,0.9) }
+        .calendar{ display:grid; grid-template-columns: var(--left-col-width) repeat(7, 1fr); border:1px solid #7f8c8d; background:white }
+        .day-header{ background:#dfe6e9; padding:8px; text-align:center; border-left:1px solid #bdc3c7; font-weight:600 }
+        .date{ font-size:12px; color:#2d3436 }
+        .times-col{ background:#f5f6fa; }
+        .times-list{ display:flex; flex-direction:column; }
+        .time-slot{ height:var(--hour-height); border-bottom:1px solid #ecf0f1; padding:6px 8px; font-size:12px; color:#2d3436 }
+        .day-col{ position:relative; min-height: calc(var(--hour-height) * 15); border-left:1px solid #ecf0f1; }
+        .grid-line{ height:var(--hour-height); border-bottom:1px dashed #ecf0f1 }
+        .event{ position:absolute; left:6px; right:6px; border-radius:6px; padding:8px; box-sizing:border-box; color:#222; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,0.08) }
+        .event b{ display:block; font-size:13px }
+        .event small{ color:#222; opacity:0.8 }
+        .legend{ margin-left:12px }
+            /* Responsive: on small screens show only one day column and a day selector */
+            @media (max-width: 700px) {
+                .calendar{ grid-template-columns: var(--left-col-width) 1fr; overflow: visible }
+                .day-header{ display:none }
+                .times-col{ grid-column: 1 / 2 }
+                .day-col{ grid-column: 2 / 3 }
+                .day-col{ display:none; min-height: calc(var(--hour-height) * 15) }
+                .day-col.active{ display:block }
+                /* make events take full width on mobile */
+                .event{ left:4px; right:4px; border-radius:6px }
+                .top-bar{ flex-wrap:wrap }
+                #mobileDaySelect{ display:inline-block }
+            }
+            @media (min-width: 701px) {
+                #mobileDaySelect{ display:none }
+            }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="brand">
+            <div class="logo">EDT</div>
+            <div>
+                <div style="font-size:16px">Emploi du temps</div>
+                <div style="font-size:12px; opacity:0.9">Semaine: <strong style="color:white">{{ selected_week }}</strong></div>
+            </div>
+        </div>
+
+        <div class="nav-controls">
+            <form id="selForm" method="get" action="/" style="display:flex;gap:10px;align-items:center">
+                <select id="edt" name="edt" onchange="this.form.submit()">
+                    {% for o in options %}
+                    <option value="{{ o }}" {% if o==option %}selected{% endif %}>{{ o }}</option>
+                    {% endfor %}
+                </select>
+
+                <button type="button" onclick="changeWeek(-1)">‹ Préc</button>
+                <button type="button" onclick="changeWeek(1)">Suiv ›</button>
+
+                <label for="week">Semaine</label>
+                <select id="week" name="week" onchange="this.form.submit()">
+                    {% for w, label in weeks %}
+                    <option value="{{ w }}" {% if w==selected_week %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <!-- Mobile day selector -->
+                <select id="mobileDaySelect" onchange="setActiveDay(parseInt(this.value))">
+                    <option value="0">Lundi</option>
+                    <option value="1">Mardi</option>
+                    <option value="2">Mercredi</option>
+                    <option value="3">Jeudi</option>
+                    <option value="4">Vendredi</option>
+                    <option value="5">Samedi</option>
+                    <option value="6">Dimanche</option>
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <div id="calendarRoot"></div>
+
+    <script>
+            // events_js and week_dates are passed as Python objects; use Jinja to serialize them safely
+            const events = {{ events_js|tojson }};
+            const weekDates = {{ week_dates|tojson }};
+            const weeks = Array.from(document.getElementById('week').options).map(o => o.value);
+
+            function changeWeek(dir){
+                const sel = document.getElementById('week');
+                let idx = sel.selectedIndex + dir;
+                if (idx < 0) idx = 0;
+                if (idx >= sel.options.length) idx = sel.options.length - 1;
+                sel.selectedIndex = idx;
+                document.getElementById('selForm').submit();
+            }
+
+        function build() {
+            const root = document.getElementById('calendarRoot');
+            root.innerHTML = '';
+            const cal = document.createElement('div');
+            cal.className = 'calendar';
+
+            // empty top-left
+            const corner = document.createElement('div');
+            corner.className = 'day-header';
+            cal.appendChild(corner);
+
+            // headers
+            const days = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+            for (let i=0;i<7;i++){
+                const h = document.createElement('div');
+                h.className = 'day-header';
+                h.innerHTML = `<div>${days[i]}</div><div class='date'>${weekDates[i]}</div>`;
+                cal.appendChild(h);
+            }
+
+            // times column
+            const timesCol = document.createElement('div');
+            timesCol.className = 'times-col times-list';
+            for (let h=8; h<=23; h++){
+                const t = document.createElement('div');
+                t.className = 'time-slot';
+                t.textContent = (('0'+h).slice(-2))+':00';
+                timesCol.appendChild(t);
+            }
+            cal.appendChild(timesCol);
+
+            // day columns
+            for (let d=0; d<7; d++){
+                const col = document.createElement('div');
+                col.className = 'day-col';
+                col.id = 'day-'+d;
+                for (let h=8; h<23; h++){
+                    const g = document.createElement('div');
+                    g.className = 'grid-line';
+                    col.appendChild(g);
+                }
+                cal.appendChild(col);
+            }
+
+            root.appendChild(cal);
+
+            // render events
+            const startHour = 8; const endHour = 23; const totalMinutes = (endHour-startHour)*60;
+            events.forEach((ev, idx) => {
+                const el = document.getElementById('day-'+ev.day);
+                if (!el) return;
+                const evStart = Math.max(ev.start_minutes, startHour*60);
+                const evEnd = Math.min(ev.start_minutes + ev.duration, endHour*60);
+                if (evEnd <= startHour*60 || evStart >= endHour*60) return;
+                const topPct = ((evStart - startHour*60)/totalMinutes)*100;
+                const heightPct = ((evEnd-evStart)/totalMinutes)*100;
+                const div = document.createElement('div');
+                div.className = 'event';
+                div.style.top = topPct+'%';
+                div.style.height = heightPct+'%';
+                const colors = ['#b2bec3','#74b9ff','#ff7675','#55efc4','#ffeaa7'];
+                div.style.background = colors[idx%colors.length];
+                div.innerHTML = `<b>${ev.title}</b><div>${ev.start} - ${ev.end}</div><small>${ev.location}</small>`;
+                el.appendChild(div);
+            });
+        }
+
+        build();
+            // Mobile helper: activate first day by default and bind selector visibility
+            function setActiveDay(dayIdx){
+                for (let d=0; d<7; d++){
+                    const el = document.getElementById('day-'+d);
+                    if (!el) continue;
+                    if (d===dayIdx) el.classList.add('active'); else el.classList.remove('active');
+                }
+            }
+
+            function updateMobileUI(){
+                const sel = document.getElementById('mobileDaySelect');
+                const lab = document.getElementById('mobileDayLabel');
+                if (window.innerWidth <= 700){
+                    sel.style.display = 'inline-block'; lab.style.display = 'inline-block';
+                    // default active day: Monday
+                    setActiveDay(0);
+                } else {
+                    sel.style.display = 'none'; lab.style.display = 'none';
+                    for (let d=0; d<7; d++){
+                        const el = document.getElementById('day-'+d);
+                        if (el) el.classList.remove('active');
+                    }
+                }
+            }
+
+            window.addEventListener('resize', updateMobileUI);
+            // initial mobile UI setup
+            updateMobileUI();
+    </script>
+</body>
+</html>
