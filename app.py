@@ -4,6 +4,7 @@ import pytz
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request
 from ics import Calendar
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 # --- TES FICHIERS ICS LOCAUX ---
 #https://edt-consult.univ-eiffel.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=6579&projectId=1&calType=ical&nbWeeks=4&displayConfigId=8
@@ -20,7 +21,7 @@ ICS_FILES = {
 }
 
 
-app = Flask(__name__)
+flask_app = Flask(__name__)
 
 
 # Fuseau horaire par défaut
@@ -57,7 +58,7 @@ def load_events(filename):
         })
     return events
 
-@app.route("/", methods=["GET"])
+@flask_app.route("/", methods=["GET"])
 def index():
     option = request.args.get("edt", "Option 1")
     filename = ICS_FILES.get(option, list(ICS_FILES.values())[0])
@@ -142,6 +143,12 @@ def index():
         options=ICS_FILES.keys(),
     )
 
+# En mode production derrière Nginx
+# Middleware pour le préfixe /ade
+app = DispatcherMiddleware(Flask('dummy_app'), {
+    '/ade': flask_app
+})
+
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5001))
-    app.run(debug=True, port=port)
+    port = int(os.environ.get("PORT", 5050))
+    flask_app.run(debug=True, port=port)
