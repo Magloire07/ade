@@ -66,8 +66,7 @@
                     <option value="{{ o }}" {% if o==option %}selected{% endif %}>{{ o }}</option>
                     {% endfor %}
                 </select>
-                    <!-- preserve week when switching group -->
-                    <input type="hidden" name="week" value="{{ selected_week }}" />
+                    <!-- week preserved via URL params; no hidden input to avoid duplicates -->
 
                 <button type="button" onclick="changeWeek(-1)">‹ Préc</button>
                 <button type="button" onclick="changeWeek(1)">Suiv ›</button>
@@ -107,7 +106,8 @@
                 if (idx < 0) idx = 0;
                 if (idx >= sel.options.length) idx = sel.options.length - 1;
                 sel.selectedIndex = idx;
-                document.getElementById('selForm').submit();
+                // use centralized handler to update URL (prevents duplicate week params)
+                onWeekChange(sel.value);
             }
 
         function build() {
