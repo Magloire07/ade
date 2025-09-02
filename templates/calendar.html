@@ -59,13 +59,22 @@
         </div>
 
         <div class="nav-controls">
-            <form id="selForm" method="get" action="/" style="display:flex;gap:10px;align-items:center">
+            <form id="selForm" method="get" action="" style="display:flex;gap:10px;align-items:center">
                 <label for="edt">Groupe</label>
-                <select id="edt" name="edt" onchange="this.form.submit()">
+                    <select id="edt" name="edt" onchange="onGroupChange(this.value)">
                     {% for o in options %}
                     <option value="{{ o }}" {% if o==option %}selected{% endif %}>{{ o }}</option>
                     {% endfor %}
                 </select>
+                <!-- preserve week when switching group -->
+                <input type="hidden" name="week" value="{{ selected_week }}" />
+                    <script>
+                        function onGroupChange(selectedValue) {
+                            const urlParams = new URLSearchParams(window.location.search);
+                            urlParams.set('edt', selectedValue);
+                            window.location.search = urlParams.toString();
+                        }
+                    </script>
 
                 <button type="button" onclick="changeWeek(-1)">‹ Préc</button>
                 <button type="button" onclick="changeWeek(1)">Suiv ›</button>
