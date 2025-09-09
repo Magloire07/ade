@@ -63,7 +63,9 @@ def load_events(filename):
 
 @flask_app.route("/", methods=["GET"])
 def index():
-    option = request.args.get("edt", "Option 1")
+    # default to the first available ICS key if edt not provided
+    default_option = next(iter(ICS_FILES.keys()))
+    option = request.args.get("edt", default_option)
     filename = ICS_FILES.get(option, list(ICS_FILES.values())[0])
     events = load_events(filename)
     # compute available weeks based on events in this file
@@ -143,7 +145,7 @@ def index():
         weeks=zip(weeks, week_labels),
         selected_week=selected_week_date.isoformat(),
         option=option,
-        options=ICS_FILES.keys(),
+    options=list(ICS_FILES.keys()),
     )
 
 # En mode production derrière Nginx
