@@ -14,6 +14,8 @@ declare -A ICS_FILES=(
   ["https://edt-consult.univ-eiffel.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=3930&projectId=1&calType=ical&nbWeeks=12&displayConfigId=8"]="ang.ics"
   ["https://edt-consult.univ-eiffel.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=3957&projectId=1&calType=ical&nbWeeks=12&displayConfigId=8"]="msh1.ics"
   ["https://edt-consult.univ-eiffel.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=3941&projectId=1&calType=ical&nbWeeks=12&displayConfigId=8"]="msh2.ics"
+  ["https://edt-consult.univ-eiffel.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=3962&projectId=1&calType=ical&nbWeeks=12&displayConfigId=8"]="eisi.ics"
+
 )
 
 # Téléchargement
