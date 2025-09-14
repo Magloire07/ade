@@ -15,14 +15,20 @@ from werkzeug.middleware.dispatcher import DispatcherMiddleware
 #https://edt-consult.univ-eiffel.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=3957&projectId=1&calType=ical&nbWeeks=12&displayConfigId=8
 #https://edt-consult.univ-eiffel.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=3941&projectId=1&calType=ical&nbWeeks=12&displayConfigId=8
 #https://edt-consult.univ-eiffel.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=3962&projectId=1&calType=ical&nbWeeks=12&displayConfigId=8
+
+#https://edt-consult.univ-eiffel.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=3959&projectId=1&calType=ical&nbWeeks=12&displayConfigId=8
+#https://edt-consult.univ-eiffel.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=3943&projectId=1&calType=ical&nbWeeks=12&displayConfigId=8
+
 ICS_FILES = {
     "1-I3": "edt1.ics",
     "2-I3": "edt2.ics",
     "3-I3": "edt3.ics",
     "A43-P2-08": "ang.ics",
-    "EIMI43_P2-2": "msh1.ics",
+    "EIMI43_P2-02": "msh1.ics",
     "ECNV43-P2-02": "msh2.ics",
     "EISI43-P2-01": "eisi.ics",
+    "EIMI43_P2-04": "msh3.ics",
+    "ECNV43-P2-04": "msh4.ics",
 }
 
 
